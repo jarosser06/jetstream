@@ -2,4 +2,6 @@ troposphere==1.9.1
 pyyaml
 awscli
 boto
+boto3
 awacs
+pyaml

@@ -23,6 +23,8 @@ from datetime import datetime
 from importlib import import_module
 from troposphere import GetAtt, BaseAWSObject
 
+import pyaml
+
 
 def load_template(package, template):
     '''
@@ -227,6 +229,15 @@ class JetstreamTemplate(object):
                 % (class_name, str(excep))
             raise RuntimeError, message, trace
 
+    def yaml_name(self):
+        '''Rename xxx.template to xxx.tyml'''
+        return self.name.split('.')[0] + '.tyml'
+
+    def json2yaml(self):
+        '''Returns yaml format from json dict'''
+        return pyaml.dumps(yaml_sort(json.loads(
+            self.template.to_json(sort_keys=False))))
+
 
 TOP_LEVEL_DICT_ORDER = [
     'AWSTemplateFormatVersion', 'Description', 'Metadata',
@@ -250,6 +261,16 @@ class JetstreamEncoder(json.JSONEncoder):
 
             return json.JSONEncoder.encode(self, dikt)
         return json.JSONEncoder.encode(self, obj)
+
+
+def yaml_sort(yaml_dict):
+    '''Set the correct order for the template output'''
+    if 'Resources' in yaml_dict:
+        dikt = collections.OrderedDict()
+        for k in TOP_LEVEL_DICT_ORDER:
+            if k in yaml_dict:
+                dikt[k] = yaml_dict[k]
+        return dikt
 
 
 def _reformat_name(name):

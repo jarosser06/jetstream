@@ -71,7 +71,11 @@ def _execute(args):
             print("No publish set ... not publishing")
         else:
             for tmpl in updated_templates:
-                publish.publish_file(tmpl.name, tmpl.generate())
+                if args.format in ['all', 'json']:
+                    publish.publish_file(tmpl.name, tmpl.generate())
+                # Print Json.template -> Yaml.tyml files next to the original
+                if args.format in ['all', 'yaml']:
+                    publish.publish_file(tmpl.yaml_name(), tmpl.json2yaml())
                 if args.document:
                     publish.publish_file(tmpl.document_name(), tmpl.document())
     else:
@@ -90,6 +94,9 @@ def main():
     parser.add_argument('--publisher', '-P', dest='publisher',
                         help='Where to publish the templates',
                         default='local')
+    parser.add_argument('--format', choices=['all', 'yaml', 'json'],
+                        help='Format of template type.',
+                        default='all', required=False)
     parser.add_argument('--package', '-m', dest='package',
                         help='CloudFormation Templates Package',
                         required=True)

@@ -9,6 +9,7 @@ DEPENDENCIES = [
     'troposphere==1.9.1',
     'boto3==1.4.1',
     'awacs',
+    'pyaml',
 ]
 
 STYLE_REQUIRES = [

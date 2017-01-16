@@ -55,10 +55,8 @@ class S3Publisher(object):
                 Key=name,
             )
 
-            body = resp.get('Body')
-            body_obj = json.load(body)
-            latest_obj = json.loads(latest)
-            return bool(cmp(latest_obj, body_obj))
+            existing = resp.get('Body')
+            return latest != existing
         except botocore.exceptions.ClientError as excep:
             if 'specified key does not exist' in str(excep):
                 return True
@@ -98,14 +96,12 @@ class LocalPublisher(object):
         Compares local file contents with latest
         copy to determine whether anything has changed
         '''
-        file_path = path.join(self.base_path,
-                              name)
+        file_path = path.join(self.base_path, name)
         try:
             fil = open(file_path, 'r')
-            existing = json.load(fil)
+            existing = fil.read()
             fil.close()
-            latest_obj = json.loads(latest)
-            return bool(cmp(latest_obj, existing))
+            return latest != existing
         except IOError as excep:
             if 'No such file or directory:' not in str(excep):
                 raise excep

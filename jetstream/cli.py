@@ -38,8 +38,14 @@ def _execute(args):
     templates = template.load_templates(args.package)
     updated_templates = []
     for _, tmpl in templates.items():
-        if publish.newer(tmpl.name, tmpl.generate()):
-            updated_templates.append(tmpl)
+        # Rename to match argparse extension
+        tmpl.name = tmpl.name.split('.')[0] + '.' + args.extention
+        if args.format == 'json':
+            template_string = tmpl.generate()
+        else:
+            template_string = tmpl.generate_yaml()
+        if publish.newer(tmpl.name, template_string):
+                updated_templates.append(tmpl)
     if updated_templates:
         print("Updated Templates: " + ', '.join(
             [t.name for t in updated_templates]))
@@ -70,12 +76,12 @@ def _execute(args):
         if args.no_publish:
             print("No publish set ... not publishing")
         else:
+            # Print json format, default to yaml if not specified
             for tmpl in updated_templates:
-                if args.format in ['all', 'json']:
+                if args.format == 'json':
                     publish.publish_file(tmpl.name, tmpl.generate())
-                # Print Json.template -> Yaml.tyml files next to the original
-                if args.format in ['all', 'yaml']:
-                    publish.publish_file(tmpl.yaml_name(), tmpl.json2yaml())
+                else:
+                    publish.publish_file(tmpl.name, tmpl.generate_yaml())
                 if args.document:
                     publish.publish_file(tmpl.document_name(), tmpl.document())
     else:
@@ -94,9 +100,12 @@ def main():
     parser.add_argument('--publisher', '-P', dest='publisher',
                         help='Where to publish the templates',
                         default='local')
-    parser.add_argument('--format', choices=['all', 'yaml', 'json'],
+    parser.add_argument('--format', '-F', choices=['yaml', 'json'],
                         help='Format of template type.',
-                        default='all', required=False)
+                        default='yaml', required=False)
+    parser.add_argument('--extention', '-e',
+                        help='Set published file extention. \
+                        Defaults: yaml = tyml, json = template')
     parser.add_argument('--package', '-m', dest='package',
                         help='CloudFormation Templates Package',
                         required=True)
@@ -144,4 +153,9 @@ def main():
     args = parser.parse_args()
     logging.basicConfig(level=args.loglevel)
 
+    if not args.extention:
+        ext_default = {'yaml': 'tyml', 'json': 'template'}
+        args.extention = ext_default[args.format]
+
     _execute(args)
+
